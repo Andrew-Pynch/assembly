@@ -1,0 +1,8 @@
+D:\Github\assembly\Project32_VS2019\Debug\Project.exe
+D:\Github\assembly\Project32_VS2019\Debug\Project.pdb
+D:\Github\assembly\ASSIGN2\Debug\Project.exe
+D:\Github\assembly\ASSIGN2\Debug\Project.pdb
+D:\Github\assembly\ASSIGN3\Debug\Project.exe
+D:\Github\assembly\ASSIGN3\Debug\Project.pdb
+D:\Github\assembly\ASSIGN4\Debug\Project.exe
+D:\Github\assembly\ASSIGN4\Debug\Project.pdb
