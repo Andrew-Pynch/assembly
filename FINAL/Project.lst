@@ -1,8 +1,22 @@
-Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/09/20 11:24:15
+Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/02/20 18:45:05
 #Program Template     (template.asm			     Page 1 - 1
 
 
 				TITLE Program Template     (template.asm)
+				; ===========================================
+				; Author: Andrew Pynch
+				; Last Modified: 8/2/2020
+				; OSU email address: pyncha@oregonstate.edu
+				; Course number/section: CS271 SEC 1
+				; Assignment Number: 4            
+				; Due Date: 8/2/2020
+				;	- Get a user request in the range [min = 15 .. max = 200].
+				;	- Generate request random integers in the range [lo = 100 .. hi = 999], storing them in consecutive elements of an array.
+				;	- Display the list of integers before sorting, 10 numbers per line.
+				;	- Sort the list in descending order (i.e., largest first).
+				;	- Calculate and display the median value, rounded to the nearest integer.
+				;	- Display the sorted list, 10 numbers per line.
+				; ===========================================
 
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
@@ -23,47 +37,575 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/09/20 11:24:15
 			      C .LIST
 			      C 
 
+				; consts
+ = 0000000A			MIN = 10
+ = 000000C8			MAX = 200
+ = 00000064			LOWERBOUND = 100
+ = 000003E7			UPPERBOUND = 999
+
  00000000			.data
- 00000000 20 00			string BYTE " ", 0
+				; introduction messages
+ 00000000 41 73 73 69 67		programmer_assignment	BYTE	"Assignment: 4 | Programmer: Andrew James Pynch", 0
+	   6E 6D 65 6E 74
+	   3A 20 34 20 7C
+	   20 50 72 6F 67
+	   72 61 6D 6D 65
+	   72 3A 20 41 6E
+	   64 72 65 77 20
+	   4A 61 6D 65 73
+	   20 50 79 6E 63
+	   68 00
+ 0000002F 54 68 69 73 20		msg1					BYTE	"This program generates a pseudo random series of numbers as small as 100 and numbers as large as 999", 0
+	   70 72 6F 67 72
+	   61 6D 20 67 65
+	   6E 65 72 61 74
+	   65 73 20 61 20
+	   70 73 65 75 64
+	   6F 20 72 61 6E
+	   64 6F 6D 20 73
+	   65 72 69 65 73
+	   20 6F 66 20 6E
+	   75 6D 62 65 72
+	   73 20 61 73 20
+	   73 6D 61 6C 6C
+	   20 61 73 20 31
+	   30 30 20 61 6E
+	   64 20 6E 75 6D
+	   62 65 72 73 20
+	   61 73 20 6C 61
+	   72 67 65 20 61
+	   73 20 39 39 39
+	   00
+ 00000094 54 68 65 20 70		msg2					BYTE	"The program then displays this random list neatly. Afterwords it performs sorting of the list and calculates a median list value.", 0 
+	   72 6F 67 72 61
+	   6D 20 74 68 65
+	   6E 20 64 69 73
+	   70 6C 61 79 73
+	   20 74 68 69 73
+	   20 72 61 6E 64
+	   6F 6D 20 6C 69
+	   73 74 20 6E 65
+	   61 74 6C 79 2E
+	   20 41 66 74 65
+	   72 77 6F 72 64
+	   73 20 69 74 20
+	   70 65 72 66 6F
+	   72 6D 73 20 73
+	   6F 72 74 69 6E
+	   67 20 6F 66 20
+	   74 68 65 20 6C
+	   69 73 74 20 61
+	   6E 64 20 63 61
+	   6C 63 75 6C 61
+	   74 65 73 20 61
+	   20 6D 65 64 69
+	   61 6E 20 6C 69
+	   73 74 20 76 61
+	   6C 75 65 2E 00
+ 00000116 46 69 6E 61 6C		msg3					BYTE	"Finally, the program displays the recently sorted list neatly in descending order.", 0
+	   6C 79 2C 20 74
+	   68 65 20 70 72
+	   6F 67 72 61 6D
+	   20 64 69 73 70
+	   6C 61 79 73 20
+	   74 68 65 20 72
+	   65 63 65 6E 74
+	   6C 79 20 73 6F
+	   72 74 65 64 20
+	   6C 69 73 74 20
+	   6E 65 61 74 6C
+	   79 20 69 6E 20
+	   64 65 73 63 65
+	   6E 64 69 6E 67
+	   20 6F 72 64 65
+	   72 2E 00
+ 00000169 54 68 69 73 20		msg4					BYTE	"This program is also busy computing the answer to life, the universe, and everything", 0 
+	   70 72 6F 67 72
+	   61 6D 20 69 73
+	   20 61 6C 73 6F
+	   20 62 75 73 79
+	   20 63 6F 6D 70
+	   75 74 69 6E 67
+	   20 74 68 65 20
+	   61 6E 73 77 65
+	   72 20 74 6F 20
+	   6C 69 66 65 2C
+	   20 74 68 65 20
+	   75 6E 69 76 65
+	   72 73 65 2C 20
+	   61 6E 64 20 65
+	   76 65 72 79 74
+	   68 69 6E 67 00
+ 000001BE 20 00				ta_messagee				BYTE	" ", 0
+				; Get data messages
+ 000001C0 57 68 61 74 20		numlength				BYTE	"What should the length of the array of random numbers be? It must in the range[15, 200]: ", 0
+	   73 68 6F 75 6C
+	   64 20 74 68 65
+	   20 6C 65 6E 67
+	   74 68 20 6F 66
+	   20 74 68 65 20
+	   61 72 72 61 79
+	   20 6F 66 20 72
+	   61 6E 64 6F 6D
+	   20 6E 75 6D 62
+	   65 72 73 20 62
+	   65 3F 20 49 74
+	   20 6D 75 73 74
+	   20 69 6E 20 74
+	   68 65 20 72 61
+	   6E 67 65 5B 31
+	   35 2C 20 32 30
+	   30 5D 3A 20 00
+ 0000021A 55 6E 6E 61 63		error					BYTE	"Unnaceptable input. Please make sure your entry is within the specified range. ", 0	
+	   65 70 74 61 62
+	   6C 65 20 69 6E
+	   70 75 74 2E 20
+	   50 6C 65 61 73
+	   65 20 6D 61 6B
+	   65 20 73 75 72
+	   65 20 79 6F 75
+	   72 20 65 6E 74
+	   72 79 20 69 73
+	   20 77 69 74 68
+	   69 6E 20 74 68
+	   65 20 73 70 65
+	   63 69 66 69 65
+	   64 20 72 61 6E
+	   67 65 2E 20 00
+ 0000026A 54 68 65 20 75		print_unsorted			BYTE	"The unsorted array of integers is: ", 0
+	   6E 73 6F 72 74
+	   65 64 20 61 72
+	   72 61 79 20 6F
+	   66 20 69 6E 74
+	   65 67 65 72 73
+	   20 69 73 3A 20
+	   00
+ 0000028E 54 68 65 20 6D		print_median			BYTE	"The median value of the array of integers is:  ", 0
+	   65 64 69 61 6E
+	   20 76 61 6C 75
+	   65 20 6F 66 20
+	   74 68 65 20 61
+	   72 72 61 79 20
+	   6F 66 20 69 6E
+	   74 65 67 65 72
+	   73 20 69 73 3A
+	   20 20 00
+ 000002BE 54 68 65 20 73		print_sorted			BYTE	"The sorted array of integers is: ", 0
+	   6F 72 74 65 64
+	   20 61 72 72 61
+	   79 20 6F 66 20
+	   69 6E 74 65 67
+	   65 72 73 20 69
+	   73 3A 20 00
+ 000002E0 2D 2D 2D 2D 2D		line					BYTE	"----------------------------------", 0
+	   2D 2D 2D 2D 2D
+	   2D 2D 2D 2D 2D
+	   2D 2D 2D 2D 2D
+	   2D 2D 2D 2D 2D
+	   2D 2D 2D 2D 2D
+	   2D 2D 2D 2D 00
+
+				; misc	
+ 00000303 09 00				spaces					BYTE	"	", 0		
+ 00000305 00000000			num1					DWORD	?			
+ 00000309  000000C8 [			array					DWORD	MAX DUP(?)		
+	    00000000
+	   ]
+					
+				; the answer
+ 00000629 20 43 6F 6D 70		aa						BYTE	" Computing the answer to life, the universe, and everything... ", 0
+	   75 74 69 6E 67
+	   20 74 68 65 20
+	   61 6E 73 77 65
+	   72 20 74 6F 20
+	   6C 69 66 65 2C
+	   20 74 68 65 20
+	   75 6E 69 76 65
+	   72 73 65 2C 20
+	   61 6E 64 20 65
+	   76 65 72 79 74
+	   68 69 6E 67 2E
+	   2E 2E 20 00
+ 00000669 20 20 20 20 3D		ab						BYTE	"    ======================"
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D
+ 00000683 20 20 20 20 20		a						BYTE	"          _,,--,,    _"
+	   20 20 20 20 20
+	   5F 2C 2C 2D 2D
+	   2C 2C 20 20 20
+	   20 5F
+ 00000699 20 20 20 20 20		b						BYTE	"        /`       .`\  "
+	   20 20 20 2F 60
+	   20 20 20 20 20
+	   20 20 2E 60 5C
+	   20 20
+ 000006AF 20 20 20 20 20		ce						BYTE	"       /  '  _.-'   \ "
+	   20 20 2F 20 20
+	   27 20 20 5F 2E
+	   2D 27 20 20 20
+	   5C 20
+ 000006C5 20 20 20 20 20		d						BYTE	"       |  `'_{}_    | "
+	   20 20 7C 20 20
+	   60 27 5F 7B 7D
+	   5F 20 20 20 20
+	   7C 20
+ 000006DB 20 20 20 20 20		e						BYTE	"       |  /`    `\  | "
+	   20 20 7C 20 20
+	   2F 60 20 20 20
+	   20 60 5C 20 20
+	   7C 20
+ 000006F1 20 20 20 20 20		f						BYTE	"        \/ ==  == \/  "
+	   20 20 20 5C 2F
+	   20 3D 3D 20 20
+	   3D 3D 20 5C 2F
+	   20 20
+ 00000707 20 20 20 20 20		g						BYTE	"        /| (.)(.) |\  "
+	   20 20 20 2F 7C
+	   20 28 2E 29 28
+	   2E 29 20 7C 5C
+	   20 20
+ 0000071D 20 20 20 20 20		h						BYTE	"        \|  __)_  |/  "
+	   20 20 20 5C 7C
+	   20 20 5F 5F 29
+	   5F 20 20 7C 2F
+	   20 20
+ 00000733 20 20 20 20 20		i						BYTE	"         |\/____\/|   "
+	   20 20 20 20 7C
+	   5C 2F 5F 5F 5F
+	   5F 5C 2F 7C 20
+	   20 20
+ 00000749 20 20 20 20 20		j						BYTE	"         | ` ~~ ` |   "
+	   20 20 20 20 7C
+	   20 60 20 7E 7E
+	   20 60 20 7C 20
+	   20 20
+ 0000075F 20 20 20 20 20		k						BYTE	"         \        /   "
+	   20 20 20 20 5C
+	   20 20 20 20 20
+	   20 20 20 2F 20
+	   20 20
+ 00000775 20 20 20 20 20		l						BYTE	"          `.____.`    "
+	   20 20 20 20 20
+	   60 2E 5F 5F 5F
+	   5F 2E 60 20 20
+	   20 20
+ 0000078B 20 20 20 20 3D		m						BYTE	"    ======================"
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D
+ 000007A5 20 20 20 20 3D		n						BYTE	"    = THE ANSWER IS 42!! ="
+	   20 54 48 45 20
+	   41 4E 53 57 45
+	   52 20 49 53 20
+	   34 32 21 21 20
+	   3D
+ 000007BF 20 20 20 20 3D		o						BYTE    "    ======================"
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D 3D 3D 3D 3D
+	   3D
+
+						
 
 
  00000000			.code
+ 00000000			.code
  00000000			main PROC
- 00000000  6A 01			push 1
- 00000002  6A 03			push 3
- 00000004  6A 04			push 4
- 00000006  E8 00000007			call rfinal
-					exit
- 0000000B  6A 00	   *	    push   +000000000h
- 0000000D  E8 00000000 E   *	    call   ExitProcess
- 00000012			main ENDP
+				; Call the procedures to get the program up and running
+				; Init randomly once
+ 00000000  E8 00000000 E		call					Randomize
+				; Init msgs
+ 00000005  E8 0000007A			call					intro	
+				; Get user data stuff
+ 0000000A  68 00000305 R		push					OFFSET num1		
+ 0000000F  E8 000000B7			call					GETDATA		
+				; Init array with random ints in range
+ 00000014  68 00000309 R		push					OFFSET array			
+ 00000019  FF 35 00000305 R		push					num1					
+ 0000001F  E8 000000E1			call					POPULATEARRAY					
+				; Print the init unsorted arr
+ 00000024  68 00000309 R		push					OFFSET array			
+ 00000029  FF 35 00000305 R		push					num1					
+ 0000002F  68 0000026A R		push					OFFSET print_unsorted
+ 00000034  E8 000000F0			call					PRINTARRAY		
+				; sort the array
+ 00000039  68 00000309 R		push					OFFSET array			
+ 0000003E  FF 35 00000305 R		push					num1				
+ 00000044  E8 00000138			call					SORTARRAY				
+				; median calculations + print median value
+ 00000049  68 00000309 R		push					OFFSET array			
+ 0000004E  FF 35 00000305 R		push					num1					
+ 00000054  E8 0000014C			call					COMPUTEMEDIAN			
+				; print sorted array
+ 00000059  68 00000309 R		push					OFFSET array			
+ 0000005E  FF 35 00000305 R		push					num1					
+ 00000064  68 000002BE R		push					OFFSET print_sorted		
+ 00000069  E8 000000BB			call					PRINTARRAY	
+				; Cleanrup
+ 0000006E  E8 00000000 E		call					CrLF	
+ 00000073  E8 00000000 E		call					CrLF
+				; compute the answer to life, the universe, and everything
+ 00000078  E8 0000019C			call					THEANSWER
+					exit	
+ 0000007D  6A 00	   *	    push   +000000000h
+ 0000007F  E8 00000000 E   *	    call   ExitProcess
+ 00000084			main ENDP
 
- 00000012			rfinal PROC
- 00000012  55				push ebp
- 00000013  8B EC			mov ebp, esp
- 00000015  8B 45 10			mov eax, [ebp + 16]
- 00000018  8B 5D 0C			mov ebx, [ebp + 12]
- 0000001B  8B 4D 08			mov ecx, [ebp + 8]
- 0000001E  F7 E3			mul ebx
- 00000020  89 45 10			mov [ebp + 16], eax
- 00000023  3B D9			cmp ebx, ecx
- 00000025  7D 09			jge unwind
 
- 00000027  43				inc ebx
- 00000028  50				push eax
- 00000029  53				push ebx
- 0000002A  51				push ecx
- 0000002B  E8 FFFFFFE2			call rfinal
- 00000030			unwind:
- 00000030  8B 45 10			mov eax, [ebp + 16]
- 00000033  E8 00000000 E		call WriteDec
- 00000038  BA 00000000 R		mov edx, OFFSET string
- 0000003D  E8 00000000 E		call WriteString
- 00000042  5D				pop ebp
- 00000043  C2 000C			ret 12
- 00000046			rfinal ENDP
+
+
+				; ========================
+				; ===== INTRODUCTION =====
+				; ========================
+ 00000084			intro PROC
+ 00000084  BA 00000000 R		mov						edx, OFFSET programmer_assignment
+ 00000089  E8 00000000 E		call					WriteString
+ 0000008E  E8 00000000 E		call					CrLf
+ 00000093  E8 00000000 E		call					CrLf
+
+ 00000098  BA 0000002F R		mov						edx, OFFSET msg1
+ 0000009D  E8 00000000 E		call					WriteString
+ 000000A2  E8 00000000 E		call					CrLf
+
+ 000000A7  BA 00000094 R		mov						edx, OFFSET msg2
+ 000000AC  E8 00000000 E		call					WriteString
+ 000000B1  E8 00000000 E		call					CrLf
+
+ 000000B6  BA 00000116 R		mov						edx, OFFSET msg3
+ 000000BB  E8 00000000 E		call					WriteString
+ 000000C0  E8 00000000 E		call					CrLf
+ 000000C5  E8 00000000 E		call					CrLf
+
+ 000000CA  C3				ret
+ 000000CB			intro ENDP
+
+
+
+
+				; ===================
+				; ===== GETDATA =====
+				; ===================
+ 000000CB			GETDATA PROC 
+ 000000CB  55				push					ebp					
+ 000000CC  8B EC			mov						ebp, esp			
+ 000000CE  8B 5D 08			mov						ebx, [ebp + 8]		
+
+ 000000D1				ENTERUSERDATALOOP:
+						; Get user input
+ 000000D1  BA 000001C0 R			mov						edx, OFFSET numlength
+ 000000D6  E8 00000000 E			call					WriteString
+ 000000DB  E8 00000000 E			call					ReadInt
+						
+						; Validation
+ 000000E0  83 F8 0A				cmp						eax, MIN			; Check that num > min
+ 000000E3  7C 09				jl						ERRLOOP			; if num < min, jump to error loop
+ 000000E5  3D 000000C8				cmp						eax, MAX
+ 000000EA  7F 02				jg						ERRLOOP			; if num > max, jump to error loop
+ 000000EC  EB 11				jmp						VALIDENTRY			; if its good in the hood, jump to next valid loop
+							
+					
+ 000000EE				ERRLOOP:		; For when the user fucked up on entering a simple number
+ 000000EE  BA 0000021A R			mov						edx, OFFSET error
+ 000000F3  E8 00000000 E			call					WriteString
+ 000000F8  E8 00000000 E			call					CrLf
+ 000000FD  EB D2				jmp						ENTERUSERDATALOOP
+					
+ 000000FF				VALIDENTRY:
+ 000000FF  89 03				mov						[ebx], eax			
+ 00000101  5D					pop						ebp					
+					
+					;clear the stack
+ 00000102  C2 0004			ret 4
+ 00000105			GETDATA ENDP
+
+
+
+
+				; ========================
+				; ===== FILLARRAY =====
+				; ========================
+ 00000105			POPULATEARRAY PROC 
+ 00000105  55				push					ebp				
+ 00000106  8B EC			mov						ebp, esp		
+ 00000108  8B 7D 0C			mov						edi, [ebp + 12] 
+ 0000010B  8B 4D 08			mov						ecx, [ebp + 8]  ;ecx now holds the num which will count down each loop
+
+ 0000010E				ARRAYFILL:
+ 0000010E  B8 000003E7				mov						eax, UPPERBOUND			
+ 00000113  83 E8 65				sub						eax, LOWERBOUND + 1		
+ 00000116  E8 00000000 E			call					RandomRange		        ; Produce numbers only within the range
+ 0000011B  83 C0 64				add						eax, LOWERBOUND			
+ 0000011E  89 07				mov						[edi], eax		
+ 00000120  83 C7 04				add						edi, 4			
+ 00000123  E2 E9				loop					ARRAYFILL
+							
+ 00000125  5D					pop						ebp					
+
+					;clear whats left on the stack
+ 00000126  C2 0008			ret 8
+ 00000129			POPULATEARRAY ENDP
+
+
+
+				; =======================
+				; ===== DISPLAYLIST =====
+				; =======================
+ 00000129			PRINTARRAY PROC
+ 00000129  55				push					ebp			
+ 0000012A  8B EC			mov						ebp, esp		
+ 0000012C  8B 4D 0C			mov						ecx, [ebp + 12]	
+ 0000012F  8B 75 10			mov						esi, [ebp + 16]
+ 00000132  BB 00000001			mov						ebx, 1		
+
+ 00000137  8B 55 08			mov						edx, [ebp + 8]	
+ 0000013A  E8 00000000 E		call					CrLf
+ 0000013F  E8 00000000 E		call					WriteString
+ 00000144  E8 00000000 E		call					CrLf
+ 00000149  E8 00000000 E		call					CrLf
+
+ 0000014E				DISPLAYVALUE:
+						; Check if we need a new line
+ 0000014E  83 FB 0A				cmp						ebx, MIN	
+ 00000151  7F 19				jg						NEWROW	
+ 00000153  8B 06				mov						eax, [esi]  
+ 00000155  E8 00000000 E			call					WriteDec	
+
+						; Pretty printin
+ 0000015A  BA 00000303 R			mov						edx, OFFSET spaces
+ 0000015F  E8 00000000 E			call					WriteString
+
+ 00000164  83 C6 04				add						esi, 4			
+ 00000167  43					inc						ebx				
+ 00000168  E2 E4				loop					DISPLAYVALUE	
+ 0000016A  EB 0C				jmp						DONE		
+						
+ 0000016C				NEWROW:
+ 0000016C  E8 00000000 E			call					CrLf		
+ 00000171  BB 00000001				mov						ebx, 1		
+ 00000176  EB D6				jmp						DISPLAYVALUE	
+
+ 00000178				DONE:
+ 00000178  E8 00000000 E			call					CrLf
+ 0000017D  5D					pop						ebp		
+ 0000017E  C2 000C				ret	12						
+ 00000181			PRINTARRAY ENDP
+
+
+
+
+				; ====================
+				; ===== SORTLIST =====
+				; ====================
+ 00000181			SORTARRAY PROC
+ 00000181  55				push					ebp			
+ 00000182  8B EC			mov						ebp, esp		
+ 00000184  8B 4D 08			mov						ecx, [ebp + 8]
+ 00000187  49				dec						ecx				
+						
+					; i loop
+ 00000188				L1: 
+ 00000188  51					push					ecx				
+ 00000189  8B 75 0C				mov						esi, [ebp + 12]	
+					
+					; j loop
+ 0000018C				L2:
+ 0000018C  8B 06				mov						eax, [esi]			
+ 0000018E  39 46 04				cmp						[esi +4], eax		
+ 00000191  7C 05				jl						L3					
+ 00000193  87 46 04				xchg					eax, [esi+4]		
+ 00000196  89 06				mov						[esi], eax									
+					
+					; k loop
+ 00000198				L3:
+ 00000198  83 C6 04				add						esi, 4			
+ 0000019B  E2 EF				loop					L2			
+
+						; back to out loop
+ 0000019D  59					pop						ecx					
+ 0000019E  E2 E8				loop					L1						
+
+ 000001A0				L4:	
+ 000001A0  5D					pop						ebp						
+ 000001A1  C2 0008				ret						8					
+ 000001A4  C3				ret
+ 000001A5			SORTARRAY ENDP
+
+
+
+
+				; =========================
+				; ===== DISPLAYMEDIAN =====
+				; =========================
+ 000001A5			COMPUTEMEDIAN PROC
+ 000001A5  55				push					ebp				
+ 000001A6  8B EC			mov						ebp, esp	
+ 000001A8  8B 45 08			mov						eax, [ebp + 8]	
+ 000001AB  8B 75 0C			mov						esi, [ebp + 12]	
+ 000001AE  BA 00000000			mov						edx, 0		
+						
+ 000001B3  BB 00000002			mov						ebx, 2			
+ 000001B8  F7 F3			div						ebx				
+ 000001BA  83 FA 00			cmp						edx, 0			
+ 000001BD  74 32			je						CALCULATEMEDIAN
+
+ 000001BF  BB 00000004			mov						ebx, 4			
+ 000001C4  F7 E3			mul						ebx				
+ 000001C6  03 F0			add						esi, eax		
+ 000001C8  8B 06			mov						eax, [esi]		
+ 000001CA  EB 00			jmp						DISPLAY
+
+ 000001CC				DISPLAY:				
+ 000001CC  E8 00000000 E			call					CrLf
+ 000001D1  E8 00000000 E			call					CrLf
+ 000001D6  BA 0000028E R			mov						edx, OFFSET print_median
+ 000001DB  E8 00000000 E			call					WriteString
+ 000001E0  E8 00000000 E			call					WriteDec								
+ 000001E5  E8 00000000 E			call					CrLf
+ 000001EA  E8 00000000 E			call					CrLf
+ 000001EF  EB 24				jmp						DONE
+
+ 000001F1				CALCULATEMEDIAN:
+ 000001F1  BB 00000004				mov						ebx, 4										
+ 000001F6  F7 E3				mul						ebx								
+ 000001F8  03 F0				add						esi, eax								
+ 000001FA  8B 16				mov						edx, [esi]								
+
+						; Get index of lower val
+ 000001FC  8B C6				mov						eax, esi									
+ 000001FE  83 E8 04				sub						eax, 4						
+ 00000201  8B F0				mov						esi, eax							
+ 00000203  8B 06				mov						eax, [esi]									
+						
+						; Compute avg between two numbers
+ 00000205  03 C2				add						eax, edx								
+ 00000207  BA 00000000				mov						edx, 0									
+ 0000020C  BB 00000002				mov						ebx, 2										
+ 00000211  F7 F3				div						ebx								
+
+ 00000213  EB B7				jmp						DISPLAY										; computation done, move to next proc
+						
+ 00000215				DONE:
+ 00000215  5D					pop						ebp		
+ 00000216  C2 0008				ret 8				
+ 00000219			COMPUTEMEDIAN ENDP
+
+
+
+
+				; =====================
+				; ===== THEANSWER =====
+				; =====================
+ 00000219			THEANSWER PROC
+ 00000219  B8 00000000			mov						eax, 0
+ 0000021E			THEANSWER ENDP
 				END main
-Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/09/20 11:24:15
+Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/02/20 18:45:05
 #Program Template     (template.asm			     Symbols 2 - 1
 
 
@@ -157,14 +699,18 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000002 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000046 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000007D9 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000021E Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
+COMPUTEMEDIAN  . . . . . . . . .	P Near	 000001A5 _TEXT	Length= 00000074 Public STDCALL
+  DISPLAY  . . . . . . . . . . .	L Near	 000001CC _TEXT	
+  CALCULATEMEDIAN  . . . . . . .	L Near	 000001F1 _TEXT	
+  DONE . . . . . . . . . . . . .	L Near	 00000215 _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -179,6 +725,10 @@ FileTimeToDosDateTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 FileTimeToSystemTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FlushConsoleInputBuffer  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FormatMessageA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+GETDATA  . . . . . . . . . . . .	P Near	 000000CB _TEXT	Length= 0000003A Public STDCALL
+  ENTERUSERDATALOOP  . . . . . .	L Near	 000000D1 _TEXT	
+  ERRLOOP  . . . . . . . . . . .	L Near	 000000EE _TEXT	
+  VALIDENTRY . . . . . . . . . .	L Near	 000000FF _TEXT	
 GetCommandLineA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetCommandTail . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -210,6 +760,12 @@ MessageBoxA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 MsgBoxAsk  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MsgBox . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+POPULATEARRAY  . . . . . . . . .	P Near	 00000105 _TEXT	Length= 00000024 Public STDCALL
+  ARRAYFILL  . . . . . . . . . .	L Near	 0000010E _TEXT	
+PRINTARRAY . . . . . . . . . . .	P Near	 00000129 _TEXT	Length= 00000058 Public STDCALL
+  DISPLAYVALUE . . . . . . . . .	L Near	 0000014E _TEXT	
+  NEWROW . . . . . . . . . . . .	L Near	 0000016C _TEXT	
+  DONE . . . . . . . . . . . . .	L Near	 00000178 _TEXT	
 ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -228,6 +784,11 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SORTARRAY  . . . . . . . . . . .	P Near	 00000181 _TEXT	Length= 00000024 Public STDCALL
+  L1 . . . . . . . . . . . . . .	L Near	 00000188 _TEXT	
+  L2 . . . . . . . . . . . . . .	L Near	 0000018C _TEXT	
+  L3 . . . . . . . . . . . . . .	L Near	 00000198 _TEXT	
+  L4 . . . . . . . . . . . . . .	L Near	 000001A0 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -247,6 +808,7 @@ Str_length . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 Str_trim . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Str_ucase  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SystemTimeToFileTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+THEANSWER  . . . . . . . . . . .	P Near	 00000219 _TEXT	Length= 00000005 Public STDCALL
 WaitMsg  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteBinB  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteBin . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -265,10 +827,9 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000012 Public STDCALL
+intro  . . . . . . . . . . . . .	P Near	 00000084 _TEXT	Length= 00000047 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000084 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
-rfinal . . . . . . . . . . . . .	P Near	 00000012 _TEXT	Length= 00000034 Public STDCALL
-  unwind . . . . . . . . . . . .	L Near	 00000030 _TEXT	
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 
@@ -359,6 +920,8 @@ KEY_EVENT  . . . . . . . . . . .	Number	 00000001h
 KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh   
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
+LOWERBOUND . . . . . . . . . . .	Number	 00000064h   
+MAX  . . . . . . . . . . . . . .	Number	 000000C8h   
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -384,6 +947,7 @@ MB_USERICON  . . . . . . . . . .	Number	 00000080h
 MB_YESNOCANCEL . . . . . . . . .	Number	 00000003h   
 MB_YESNO . . . . . . . . . . . .	Number	 00000004h   
 MENU_EVENT . . . . . . . . . . .	Number	 00000008h   
+MIN  . . . . . . . . . . . . . .	Number	 0000000Ah   
 MOUSE_EVENT  . . . . . . . . . .	Number	 00000002h   
 MessageBox . . . . . . . . . . .	Text   	 MessageBoxA
 NULL . . . . . . . . . . . . . .	Number	 00000000h   
@@ -405,6 +969,7 @@ SetConsoleTitle  . . . . . . . .	Text   	 SetConsoleTitleA
 TAB  . . . . . . . . . . . . . .	Number	 00000009h   
 TRUE . . . . . . . . . . . . . .	Number	 00000001h   
 TRUNCATE_EXISTING  . . . . . . .	Number	 00000005h   
+UPPERBOUND . . . . . . . . . . .	Number	 000003E7h   
 VK_11  . . . . . . . . . . . . .	Number	 000000BDh   
 VK_12  . . . . . . . . . . . . .	Number	 000000BBh   
 VK_ADD . . . . . . . . . . . . .	Number	 0000006Bh   
@@ -486,22 +1051,53 @@ VK_UP  . . . . . . . . . . . . .	Number	 00000026h
 WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h   
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
+aa . . . . . . . . . . . . . . .	Byte	 00000629 _DATA	
+ab . . . . . . . . . . . . . . .	Byte	 00000669 _DATA	
+array  . . . . . . . . . . . . .	DWord	 00000309 _DATA	
+a  . . . . . . . . . . . . . . .	Byte	 00000683 _DATA	
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
+b  . . . . . . . . . . . . . . .	Byte	 00000699 _DATA	
+ce . . . . . . . . . . . . . . .	Byte	 000006AF _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
+d  . . . . . . . . . . . . . . .	Byte	 000006C5 _DATA	
+error  . . . . . . . . . . . . .	Byte	 0000021A _DATA	
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+e  . . . . . . . . . . . . . . .	Byte	 000006DB _DATA	
+f  . . . . . . . . . . . . . . .	Byte	 000006F1 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
+g  . . . . . . . . . . . . . . .	Byte	 00000707 _DATA	
+h  . . . . . . . . . . . . . . .	Byte	 0000071D _DATA	
+i  . . . . . . . . . . . . . . .	Byte	 00000733 _DATA	
+j  . . . . . . . . . . . . . . .	Byte	 00000749 _DATA	
+k  . . . . . . . . . . . . . . .	Byte	 0000075F _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
 lightGreen . . . . . . . . . . .	Number	 0000000Ah   
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
+line . . . . . . . . . . . . . .	Byte	 000002E0 _DATA	
+l  . . . . . . . . . . . . . . .	Byte	 00000775 _DATA	
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+msg1 . . . . . . . . . . . . . .	Byte	 0000002F _DATA	
+msg2 . . . . . . . . . . . . . .	Byte	 00000094 _DATA	
+msg3 . . . . . . . . . . . . . .	Byte	 00000116 _DATA	
+msg4 . . . . . . . . . . . . . .	Byte	 00000169 _DATA	
+m  . . . . . . . . . . . . . . .	Byte	 0000078B _DATA	
+num1 . . . . . . . . . . . . . .	DWord	 00000305 _DATA	
+numlength  . . . . . . . . . . .	Byte	 000001C0 _DATA	
+n  . . . . . . . . . . . . . . .	Byte	 000007A5 _DATA	
+o  . . . . . . . . . . . . . . .	Byte	 000007BF _DATA	
+print_median . . . . . . . . . .	Byte	 0000028E _DATA	
+print_sorted . . . . . . . . . .	Byte	 000002BE _DATA	
+print_unsorted . . . . . . . . .	Byte	 0000026A _DATA	
+programmer_assignment  . . . . .	Byte	 00000000 _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-string . . . . . . . . . . . . .	Byte	 00000000 _DATA	
+spaces . . . . . . . . . . . . .	Byte	 00000303 _DATA	
+ta_messagee  . . . . . . . . . .	Byte	 000001BE _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
