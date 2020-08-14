@@ -21,18 +21,20 @@ decoy_mode			BYTE	"Running program in DECOY mode ",0
 encrypt_mode		BYTE	"Running program in ENCRYPTION mode ", 0
 decrypt_mode		BYTE	"Running program in DECRYPTION mode ", 0
 
-operand1			WORD	46
-operand2			WORD	-20
-dest				DWORD	0
+operand1   WORD    46
+operand2   WORD    -20
+dest       DWORD   0
+
 
 .code
 .code
 ; EMPTY PROC
 main PROC
-	call			compute 
-	call			decoy
-	call			encrypt 
-	call			decrypt
+	;; inside the MAIN procedure
+	push   operand1			; ESI + 12
+	push   operand2			; ESI + 8
+	push   OFFSET dest		; ESI + 4
+	call   compute
 main ENDP
 
 
@@ -44,10 +46,45 @@ main ENDP
 ; POST-CONDITIONS:			Program assumes Decoy, Encrypt, or Decrypt mode based off of the TA / Professor provided MAIN section
 ; REGISTERS CHANGED:		TBD
 ; =========================
-compute PROC
+compute PROC 
 	mov				edx, OFFSET compute_mode
 	call			WriteString
 	call			CrLf
+	
+	push			ebp				; push ebp onto the stack
+	mov				ebp, esp		; point esp at it
+	mov				eax, [esi + 4]
+	mov				eax, -2
+
+	cmp				eax, 0			; Decoy mode?
+	je				GODECOY
+
+	cmp				eax, -1			; Encryption mode?
+	je				GOENCRYPT
+
+	cmp				eax, -2         ; Decryption mode?
+	je				GODECRYPT
+	exit
+
+
+	
+	GODECOY:
+		mov				edx, OFFSET decoy_mode					
+		call			WriteString
+		call			CrLf
+		exit
+
+	GOENCRYPT:
+		mov				edx, OFFSET encrypt_mode
+		call			WriteString
+		call			CrLf
+		exit
+
+	GODECRYPT:
+		mov				edx, OFFSET decrypt_mode
+		call			WriteString
+		call			CrLf
+		exit
 compute ENDP
 
 
@@ -69,9 +106,8 @@ compute ENDP
 ; REGISTERS CHANGED:		TBD
 ; =========================
 decoy PROC
-	mov				edx, OFFSET decoy_mode
-	call			WriteString
-	call			CrLf
+; Print decoy_mode to screen for debugging purposes
+
 decoy ENDP
 
 
@@ -93,9 +129,7 @@ decoy ENDP
 ; REGISTERS CHANGED:		TBD
 ; =========================
 encrypt PROC
-	mov				edx, OFFSET encrypt_mode
-	call			WriteString
-	call			CrLf
+
 encrypt ENDP
 
 
@@ -117,9 +151,7 @@ encrypt ENDP
 ; REGISTERS CHANGED:		TBD
 ; =========================
 decrypt PROC
-	mov				edx, OFFSET decrypt_mode
-	call			WriteString
-	call			CrLf
+
 decrypt ENDP
 
 

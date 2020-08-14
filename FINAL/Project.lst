@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
+Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 19:27:06
 #Program Template     (template.asm			     Page 1 - 1
 
 
@@ -67,19 +67,23 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
 	   6D 6F 64 65 20
 	   00
 
- 00000082 002E			operand1			WORD	46
- 00000084 FFEC			operand2			WORD	-20
- 00000086 00000000		dest				DWORD	0
+ 00000082 002E			operand1   WORD    46
+ 00000084 FFEC			operand2   WORD    -20
+ 00000086 00000000		dest       DWORD   0
+
 
  00000000			.code
  00000000			.code
 				; EMPTY PROC
  00000000			main PROC
- 00000000  E8 0000000F			call			compute 
- 00000005  E8 00000019			call			decoy
- 0000000A  E8 00000023			call			encrypt 
- 0000000F  E8 0000002D			call			decrypt
- 00000014			main ENDP
+					;; inside the MAIN procedure
+ 00000000  66| FF 35			push   operand1			; ESI + 12
+	   00000082 R
+ 00000007  66| FF 35			push   operand2			; ESI + 8
+	   00000084 R
+ 0000000E  68 00000086 R		push   OFFSET dest		; ESI + 4
+ 00000013  E8 00000000			call   compute
+ 00000018			main ENDP
 
 
 				; =========================
@@ -90,11 +94,54 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
 				; POST-CONDITIONS:			Program assumes Decoy, Encrypt, or Decrypt mode based off of the TA / Professor provided MAIN section
 				; REGISTERS CHANGED:		TBD
 				; =========================
- 00000014			compute PROC
- 00000014  BA 00000000 R		mov				edx, OFFSET compute_mode
- 00000019  E8 00000000 E		call			WriteString
- 0000001E  E8 00000000 E		call			CrLf
- 00000023			compute ENDP
+ 00000018			compute PROC 
+ 00000018  BA 00000000 R		mov				edx, OFFSET compute_mode
+ 0000001D  E8 00000000 E		call			WriteString
+ 00000022  E8 00000000 E		call			CrLf
+					
+ 00000027  55				push			ebp				; push ebp onto the stack
+ 00000028  8B EC			mov				ebp, esp		; point esp at it
+ 0000002A  8B 46 04			mov				eax, [esi + 4]
+ 0000002D  B8 FFFFFFFE			mov				eax, -2
+
+ 00000032  83 F8 00			cmp				eax, 0			; Decoy mode?
+ 00000035  74 11			je				GODECOY
+
+ 00000037  83 F8 FF			cmp				eax, -1			; Encryption mode?
+ 0000003A  74 22			je				GOENCRYPT
+
+ 0000003C  83 F8 FE			cmp				eax, -2         ; Decryption mode?
+ 0000003F  74 33			je				GODECRYPT
+					exit
+ 00000041  6A 00	   *	    push   +000000000h
+ 00000043  E8 00000000 E   *	    call   ExitProcess
+
+
+					
+ 00000048				GODECOY:
+ 00000048  BA 0000001B R			mov				edx, OFFSET decoy_mode					
+ 0000004D  E8 00000000 E			call			WriteString
+ 00000052  E8 00000000 E			call			CrLf
+						exit
+ 00000057  6A 00	   *	    push   +000000000h
+ 00000059  E8 00000000 E   *	    call   ExitProcess
+				;
+ 0000005E				GOENCRYPT:
+ 0000005E  BA 0000003A R			mov				edx, OFFSET encrypt_mode
+ 00000063  E8 00000000 E			call			WriteString
+ 00000068  E8 00000000 E			call			CrLf
+						exit
+ 0000006D  6A 00	   *	    push   +000000000h
+ 0000006F  E8 00000000 E   *	    call   ExitProcess
+
+ 00000074				GODECRYPT:
+ 00000074  BA 0000005E R			mov				edx, OFFSET decrypt_mode
+ 00000079  E8 00000000 E			call			WriteString
+ 0000007E  E8 00000000 E			call			CrLf
+						exit
+ 00000083  6A 00	   *	    push   +000000000h
+ 00000085  E8 00000000 E   *	    call   ExitProcess
+ 0000008A			compute ENDP
 
 
 
@@ -114,11 +161,10 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
 				;								- Outputs operand1 + operand2 and stores result into dest
 				; REGISTERS CHANGED:		TBD
 				; =========================
- 00000023			decoy PROC
- 00000023  BA 0000001B R		mov				edx, OFFSET decoy_mode
- 00000028  E8 00000000 E		call			WriteString
- 0000002D  E8 00000000 E		call			CrLf
- 00000032			decoy ENDP
+ 0000008A			decoy PROC
+				; Print decoy_mode to screen for debugging purposes
+
+ 0000008A			decoy ENDP
 
 
 
@@ -138,11 +184,9 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
 				;								- Outputs message transformed by our algorithm using the key
 				; REGISTERS CHANGED:		TBD
 				; =========================
- 00000032			encrypt PROC
- 00000032  BA 0000003A R		mov				edx, OFFSET encrypt_mode
- 00000037  E8 00000000 E		call			WriteString
- 0000003C  E8 00000000 E		call			CrLf
- 00000041			encrypt ENDP
+ 0000008A			encrypt PROC
+
+ 0000008A			encrypt ENDP
 
 
 
@@ -162,17 +206,15 @@ Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
 				;								- Outputs message transformed by our algorithm using the key
 				; REGISTERS CHANGED:		TBD
 				; =========================
- 00000041			decrypt PROC
- 00000041  BA 0000005E R		mov				edx, OFFSET decrypt_mode
- 00000046  E8 00000000 E		call			WriteString
- 0000004B  E8 00000000 E		call			CrLf
- 00000050			decrypt ENDP
+ 0000008A			decrypt PROC
+
+ 0000008A			decrypt ENDP
 
 
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 17:00:27
+Microsoft (R) Macro Assembler Version 14.26.28806.0	    08/13/20 19:27:06
 #Program Template     (template.asm			     Symbols 2 - 1
 
 
@@ -267,7 +309,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 0000008A Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000050 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000008A Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -374,11 +416,14 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-compute  . . . . . . . . . . . .	P Near	 00000014 _TEXT	Length= 0000000F Public STDCALL
-decoy  . . . . . . . . . . . . .	P Near	 00000023 _TEXT	Length= 0000000F Public STDCALL
-decrypt  . . . . . . . . . . . .	P Near	 00000041 _TEXT	Length= 0000000F Public STDCALL
-encrypt  . . . . . . . . . . . .	P Near	 00000032 _TEXT	Length= 0000000F Public STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000014 Public STDCALL
+compute  . . . . . . . . . . . .	P Near	 00000018 _TEXT	Length= 00000072 Public STDCALL
+  GODECOY  . . . . . . . . . . .	L Near	 00000048 _TEXT	
+  GOENCRYPT  . . . . . . . . . .	L Near	 0000005E _TEXT	
+  GODECRYPT  . . . . . . . . . .	L Near	 00000074 _TEXT	
+decoy  . . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000000 Public STDCALL
+decrypt  . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000000 Public STDCALL
+encrypt  . . . . . . . . . . . .	P Near	 0000008A _TEXT	Length= 00000000 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000018 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
