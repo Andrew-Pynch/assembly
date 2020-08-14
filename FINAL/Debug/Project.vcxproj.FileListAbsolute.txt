@@ -6,3 +6,5 @@ D:\Github\assembly\ASSIGN3\Debug\Project.exe
 D:\Github\assembly\ASSIGN3\Debug\Project.pdb
 D:\Github\assembly\ASSIGN4\Debug\Project.exe
 D:\Github\assembly\ASSIGN4\Debug\Project.pdb
+D:\Github\assembly\FINAL\Debug\Project.exe
+D:\Github\assembly\FINAL\Debug\Project.pdb
